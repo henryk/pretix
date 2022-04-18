@@ -312,10 +312,14 @@ def webhook(request, *args, **kwargs):
     event_json = json.loads(event_body)
 
     # We do not check the signature, we just use it as a trigger to look the charge up.
-    if event_json['resource_type'] != "checkout-order":
+    if event_json['resource_type'] not in ["checkout-order", "refund"]:
         return HttpResponse("Not interested in this resource type", status=200)
 
-    payloadid = event_json['resource']['id']
+    # Retrieve the Charge ID of the refunded payment
+    if event_json['resource_type'] == 'refund':
+        payloadid = get_link(event_json['resource']['links'], 'up')['href'].split('/')[-1]
+    else:
+        payloadid = event_json['resource']['id']
 
     try:
         refs = [payloadid]
@@ -335,6 +339,8 @@ def webhook(request, *args, **kwargs):
 
     prov = Paypal(event)
     prov.init_api()
+
+    payloadid = rso.payment.info_data['id']
 
     try:
         sale = prov.client.execute(OrdersGetRequest(payloadid)).result
@@ -398,3 +404,11 @@ def isu_disconnect(request, **kwargs):
         'event': request.event.slug,
         'provider': 'paypal_settings'
     }))
+
+
+def get_link(links, rel):
+    for link in links:
+        if link['rel'] == rel:
+            return link
+
+    return None
