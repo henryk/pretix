@@ -1,0 +1,20 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "docker" ]
+  pull_request:
+    branches: [ "docker" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build and push Docker images
+      # You may pin to the exact commit or the version.
+      # uses: docker/build-push-action@e551b19e49efd4e98792db7592c17c09b89db8d8
+      uses: docker/build-push-action@v3
